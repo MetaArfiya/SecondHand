@@ -1,0 +1,699 @@
+import 'package:flutter/material.dart';
+import 'app_theme.dart';
+
+class FavoritePage extends StatefulWidget {
+  const FavoritePage({super.key});
+
+  @override
+  State<FavoritePage> createState() => _FavoritePageState();
+}
+
+class _FavoritePageState extends State<FavoritePage> {
+  // Warna Kustom
+  final Color darkBlue = AppTheme.primaryPurple;
+  final Color limeGreen = AppTheme.accentLavender;
+  final Color tealText = AppTheme.secondaryPurple;
+  String _selectedCategory = 'Semua';
+  String _searchQuery = '';
+  String _location = 'Jakarta Selatan';
+  String _sortOrder = 'Relevan';
+  final TextEditingController _searchController = TextEditingController();
+
+  final List<Map<String, Object>> _favorites = [
+    {
+      'category': 'HP',
+      'title': 'iPhone 13 Pro 256GB',
+      'price': 'Rp 11.250.000',
+      'location': 'TANGERANG',
+      'time': '2 JAM',
+      'image': 'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?auto=format&fit=crop&w=400&q=80',
+      'featured': true,
+    },
+    {
+      'category': 'Mobil',
+      'title': 'Honda HR-V E CVT',
+      'price': 'Rp 268.000.000',
+      'location': 'JAKARTA SELATAN',
+      'time': '12 MENIT',
+      'image': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=400&q=80',
+      'featured': false,
+    },
+    {
+      'category': 'Motor',
+      'title': 'Vespa Sprint 150 i-Get',
+      'price': 'Rp 42.500.000',
+      'location': 'BANDUNG',
+      'time': '35 MENIT',
+      'image': 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=400&q=80',
+      'featured': false,
+    },
+    {
+      'category': 'Sepeda',
+      'title': 'Polygon Xtrada 5',
+      'price': 'Rp 5.850.000',
+      'location': 'JAKARTA',
+      'time': '1 JAM',
+      'image': 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=400&q=80',
+      'featured': false,
+    },
+  ];
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // --- BODY ---
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 10),
+            _buildCategories(),
+            const SizedBox(height: 20),
+            _buildFavoriteHeader(),
+            _buildFavoriteGrid(),
+            const SizedBox(height: 80), // Spasi bawah
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // WIDGET: HEADER (Sama seperti Dashboard)
+  // ==========================================
+  Widget _buildHeader() {
+    return Container(
+      decoration: BoxDecoration(
+        color: darkBlue,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(15),
+          bottomRight: Radius.circular(15),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 50, 16, 20),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              InkWell(
+                onTap: _showLocationPicker,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.location_on,
+                        color: Colors.white70, size: 14),
+                    const SizedBox(width: 3),
+                    Text(
+                      _location,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 11,
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right,
+                        color: Colors.white70, size: 14),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'Notifikasi',
+                    constraints:
+                        const BoxConstraints.tightFor(width: 40, height: 40),
+                    padding: EdgeInsets.zero,
+                    onPressed: _showNotifications,
+                    icon: Icon(Icons.notifications_none,
+                        color: Colors.white.withValues(alpha: 0.8)),
+                  ),
+                  IconButton(
+                    tooltip: 'Pesan',
+                    constraints:
+                        const BoxConstraints.tightFor(width: 40, height: 40),
+                    padding: EdgeInsets.zero,
+                    onPressed: _showMessages,
+                    icon: Icon(Icons.chat_bubble_outline,
+                        color: Colors.white.withValues(alpha: 0.8)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) =>
+                        setState(() => _searchQuery = value.trim()),
+                    decoration: InputDecoration(
+                      hintText: 'Cari barang bekas...',
+                      hintStyle:
+                          TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                      prefixIcon:
+                          Icon(Icons.search, color: Colors.grey.shade400),
+                      border: InputBorder.none,
+                      suffixIcon: _searchQuery.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'Hapus pencarian',
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                              icon: const Icon(Icons.close),
+                            ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                height: 45,
+                width: 45,
+                child: Material(
+                  color: limeGreen,
+                  borderRadius: BorderRadius.circular(8),
+                  child: IconButton(
+                    tooltip: 'Filter barang favorit',
+                    onPressed: _showFilters,
+                    icon: Icon(Icons.tune, color: darkBlue),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // WIDGET: KATEGORI
+  // ==========================================
+  Widget _buildCategories() {
+    final categories = <({IconData icon, String label})>[
+      (icon: Icons.apps, label: 'Semua'),
+      (icon: Icons.directions_car, label: 'Mobil'),
+      (icon: Icons.motorcycle, label: 'Motor'),
+      (icon: Icons.pedal_bike, label: 'Sepeda'),
+      (icon: Icons.smartphone, label: 'HP'),
+    ];
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Telusuri kategori',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              TextButton(
+                onPressed: _resetFilters,
+                child: Text('Lihat semua', style: TextStyle(color: tealText)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: categories.map((category) {
+              final isActive = _selectedCategory == category.label;
+              return InkWell(
+                onTap: () => setState(() => _selectedCategory = category.label),
+                borderRadius: BorderRadius.circular(28),
+                child: Semantics(
+                  button: true,
+                  selected: isActive,
+                  label: 'Kategori ${category.label}',
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isActive ? limeGreen : Colors.grey.shade100,
+                          border: Border.all(
+                            color: isActive ? limeGreen : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Icon(
+                          category.icon,
+                          color: isActive ? darkBlue : Colors.grey.shade600,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        category.label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight:
+                              isActive ? FontWeight.bold : FontWeight.w500,
+                          color: isActive ? Colors.black : Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // WIDGET: HEADER FAVORIT
+  // ==========================================
+  Widget _buildFavoriteHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'KOLEKSIMU',
+                style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5),
+              ),
+              Text(
+                _selectedCategory == 'Semua'
+                    ? 'Barang favorit'
+                    : 'Favorit kategori $_selectedCategory',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          TextButton(
+            onPressed: _resetFilters,
+            child: Text('Lihat semua', style: TextStyle(color: tealText)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // WIDGET: GRID FAVORIT
+  // ==========================================
+  Widget _buildFavoriteGrid() {
+    final query = _searchQuery.toLowerCase();
+    final favorites = _favorites.where((product) {
+      final matchesCategory = _selectedCategory == 'Semua' ||
+          product['category'] == _selectedCategory;
+      final searchableText =
+          '${product['title']} ${product['category']} ${product['location']}'
+              .toLowerCase();
+      return matchesCategory && searchableText.contains(query);
+    }).toList();
+    if (_sortOrder == 'Harga terendah') {
+      favorites.sort((a, b) => _priceValue(a['price'] as String)
+          .compareTo(_priceValue(b['price'] as String)));
+    } else if (_sortOrder == 'Harga tertinggi') {
+      favorites.sort((a, b) => _priceValue(b['price'] as String)
+          .compareTo(_priceValue(a['price'] as String)));
+    }
+
+    if (favorites.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(32),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.favorite_border, size: 42, color: Colors.grey.shade400),
+              const SizedBox(height: 10),
+              Text(
+                _searchQuery.isNotEmpty
+                    ? 'Tidak ada barang yang cocok dengan pencarian.'
+                    : 'Belum ada barang favorit di kategori ini.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+              TextButton(onPressed: _resetFilters, child: const Text('Lihat semua')),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.72,
+        children: favorites.map((product) => _buildProductCard(
+          product['title']! as String,
+          product['price']! as String,
+          product['location']! as String,
+          product['time']! as String,
+          product['image']! as String,
+          isFeatured: product['featured']! as bool,
+        )).toList(),
+      ),
+    );
+  }
+
+  void _resetFilters() {
+    _searchController.clear();
+    setState(() {
+      _selectedCategory = 'Semua';
+      _searchQuery = '';
+      _sortOrder = 'Relevan';
+    });
+  }
+
+  int _priceValue(String price) =>
+      int.parse(price.replaceAll(RegExp(r'[^0-9]'), ''));
+
+  void _removeFavorite(String title) {
+    final index = _favorites.indexWhere((product) => product['title'] == title);
+    if (index < 0) return;
+    final removedProduct = _favorites.removeAt(index);
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$title dihapus dari favorit.'),
+        action: SnackBarAction(
+          label: 'Urungkan',
+          onPressed: () => setState(() {
+            if (!_favorites.any((product) =>
+                product['title'] == removedProduct['title'])) {
+              final insertIndex =
+                  index > _favorites.length ? _favorites.length : index;
+              _favorites.insert(insertIndex, removedProduct);
+            }
+          }),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showProductDetails(String title) async {
+    final product =
+        _favorites.firstWhere((item) => item['title'] == title);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(product['title']! as String),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(product['category']! as String),
+            const SizedBox(height: 8),
+            Text(product['price']! as String,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('${product['location']} • ${product['time']}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Tutup'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _removeFavorite(title);
+            },
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Hapus favorit'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showLocationPicker() async {
+    const locations = [
+      'Jakarta Selatan',
+      'Jakarta Pusat',
+      'Bandung',
+      'Depok',
+      'Tangerang',
+      'Surabaya',
+    ];
+    final selectedLocation = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            const ListTile(
+              title: Text('Pilih lokasi',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            ...locations.map((location) => ListTile(
+                  leading: const Icon(Icons.location_on_outlined),
+                  title: Text(location),
+                  trailing: location == _location
+                      ? Icon(Icons.check, color: tealText)
+                      : null,
+                  onTap: () => Navigator.pop(sheetContext, location),
+                )),
+          ],
+        ),
+      ),
+    );
+    if (selectedLocation != null && mounted) {
+      setState(() => _location = selectedLocation);
+    }
+  }
+
+  Future<void> _showNotifications() => showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Notifikasi'),
+          content: const Text('Belum ada notifikasi baru.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Tutup'),
+            ),
+          ],
+        ),
+      );
+
+  Future<void> _showMessages() => showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Pesan'),
+          content: const Text('Belum ada percakapan.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Tutup'),
+            ),
+          ],
+        ),
+      );
+
+  Future<void> _showFilters() async {
+    var category = _selectedCategory;
+    var sortOrder = _sortOrder;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Filter barang favorit',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                const Text('Kategori'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: ['Semua', 'Mobil', 'Motor', 'Sepeda', 'HP']
+                      .map((item) => ChoiceChip(
+                            label: Text(item),
+                            selected: category == item,
+                            onSelected: (_) =>
+                                setSheetState(() => category = item),
+                          ))
+                      .toList(),
+                ),
+                const SizedBox(height: 12),
+                const Text('Urutkan harga'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: ['Relevan', 'Harga terendah', 'Harga tertinggi']
+                      .map((item) => ChoiceChip(
+                            label: Text(item),
+                            selected: sortOrder == item,
+                            onSelected: (_) =>
+                                setSheetState(() => sortOrder = item),
+                          ))
+                      .toList(),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedCategory = category;
+                        _sortOrder = sortOrder;
+                      });
+                      Navigator.pop(sheetContext);
+                    },
+                    child: const Text('Terapkan filter'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductCard(String title, String price, String location,
+      String time, String imageUrl,
+      {required bool isFeatured}) {
+    return InkWell(
+      onTap: () => _showProductDetails(title),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+      decoration: AppTheme.cardDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(10)),
+                child: Image.network(
+                  imageUrl,
+                  height: 120,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 120,
+                    color: Colors.grey.shade300,
+                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                  ),
+                ),
+              ),
+              if (isFeatured)
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: limeGreen, // Warna hijau lime sesuai gambar
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.local_offer, size: 8, color: Colors.black), // Ikon label
+                        SizedBox(width: 2),
+                        Text('UNGGULAN',
+                            style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black)),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Hapus dari favorit',
+                      visualDensity: VisualDensity.compact,
+                      constraints:
+                          const BoxConstraints.tightFor(width: 32, height: 32),
+                      padding: EdgeInsets.zero,
+                      onPressed: () => _removeFavorite(title),
+                      icon: Icon(Icons.favorite, size: 18, color: tealText),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  price,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '$location • $time',
+                  style: TextStyle(
+                      fontSize: 9,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      ),
+    );
+  }
+}
