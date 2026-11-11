@@ -1,0 +1,35 @@
+# --- FLUTTER ---
+# Folder build & cache
+SecondHand/.dart_tool/
+SecondHand/build/
+SecondHand/.flutter-plugins
+SecondHand/.flutter-plugins-dependencies
+SecondHand/*.iml
+
+# File konfigurasi lokal Flutter
+SecondHand/.metadata
+SecondHand/pubspec.lock
+
+# --- BACKEND PYTHON ---
+# Virtual Environment (sangat besar, jangan di-commit)
+SecondHand-Backend/venv/
+
+# Database SQLite (jangan di-commit karena berisi data lokal)
+SecondHand-Backend/*.db
+
+# File upload gambar user (biar repo tetap ringan)
+SecondHand-Backend/uploads/
+
+# File cache Python
+SecondHand-Backend/__pycache__/
+*.pyc
+__pycache__/
+
+# --- LAINNYA ---
+# Environment variables (berisi password/secret)
+.env
+.env.local
+
+# File sistem operasi
+.DS_Store
+Thumbs.db
