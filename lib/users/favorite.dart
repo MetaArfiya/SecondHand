@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
+import '../app_theme.dart';
 
 class FavoritePage extends StatefulWidget {
   const FavoritePage({super.key});
@@ -15,7 +15,6 @@ class _FavoritePageState extends State<FavoritePage> {
   final Color tealText = AppTheme.secondaryPurple;
   String _selectedCategory = 'Semua';
   String _searchQuery = '';
-  String _location = 'Jakarta Selatan';
   String _sortOrder = 'Relevan';
   final TextEditingController _searchController = TextEditingController();
 
@@ -68,144 +67,76 @@ class _FavoritePageState extends State<FavoritePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       // --- BODY ---
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 10),
-            _buildCategories(),
-            const SizedBox(height: 20),
-            _buildFavoriteHeader(),
-            _buildFavoriteGrid(),
-            const SizedBox(height: 80), // Spasi bawah
-          ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSearchAndFilter(),
+              const SizedBox(height: 10),
+              _buildCategories(),
+              const SizedBox(height: 20),
+              _buildFavoriteHeader(),
+              _buildFavoriteGrid(),
+              const SizedBox(height: 80), // Spasi bawah
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ==========================================
-  // WIDGET: HEADER (Sama seperti Dashboard)
-  // ==========================================
-  Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        color: darkBlue,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(15),
-          bottomRight: Radius.circular(15),
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 50, 16, 20),
-      child: Column(
+  // Search and filter controls for the favorites list.
+  Widget _buildSearchAndFilter() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              InkWell(
-                onTap: _showLocationPicker,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.location_on,
-                        color: Colors.white70, size: 14),
-                    const SizedBox(width: 3),
-                    Text(
-                      _location,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 11,
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _searchQuery = value.trim()),
+              decoration: InputDecoration(
+                hintText: 'Cari barang favorit...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Hapus pencarian',
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                        icon: const Icon(Icons.close),
                       ),
-                    ),
-                    const Icon(Icons.chevron_right,
-                        color: Colors.white70, size: 14),
-                  ],
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    tooltip: 'Notifikasi',
-                    constraints:
-                        const BoxConstraints.tightFor(width: 40, height: 40),
-                    padding: EdgeInsets.zero,
-                    onPressed: _showNotifications,
-                    icon: Icon(Icons.notifications_none,
-                        color: Colors.white.withValues(alpha: 0.8)),
-                  ),
-                  IconButton(
-                    tooltip: 'Pesan',
-                    constraints:
-                        const BoxConstraints.tightFor(width: 40, height: 40),
-                    padding: EdgeInsets.zero,
-                    onPressed: _showMessages,
-                    icon: Icon(Icons.chat_bubble_outline,
-                        color: Colors.white.withValues(alpha: 0.8)),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 45,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (value) =>
-                        setState(() => _searchQuery = value.trim()),
-                    decoration: InputDecoration(
-                      hintText: 'Cari barang bekas...',
-                      hintStyle:
-                          TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                      prefixIcon:
-                          Icon(Icons.search, color: Colors.grey.shade400),
-                      border: InputBorder.none,
-                      suffixIcon: _searchQuery.isEmpty
-                          ? null
-                          : IconButton(
-                              tooltip: 'Hapus pencarian',
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                              },
-                              icon: const Icon(Icons.close),
-                            ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              SizedBox(
-                height: 45,
-                width: 45,
-                child: Material(
-                  color: limeGreen,
-                  borderRadius: BorderRadius.circular(8),
-                  child: IconButton(
-                    tooltip: 'Filter barang favorit',
-                    onPressed: _showFilters,
-                    icon: Icon(Icons.tune, color: darkBlue),
-                  ),
-                ),
-              ),
-            ],
+          const SizedBox(width: 10),
+          SizedBox(
+            height: 48,
+            width: 48,
+            child: IconButton.filledTonal(
+              tooltip: 'Filter barang favorit',
+              onPressed: _showFilters,
+              icon: const Icon(Icons.tune),
+            ),
           ),
         ],
       ),
     );
   }
-
-  // ==========================================
   // WIDGET: KATEGORI
   // ==========================================
   Widget _buildCategories() {
@@ -408,17 +339,26 @@ class _FavoritePageState extends State<FavoritePage> {
     setState(() {});
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$title dihapus dari favorit.'),
-        action: SnackBarAction(
-          label: 'Urungkan',
-          onPressed: () => setState(() {
-            if (!_favorites.any((product) =>
-                product['title'] == removedProduct['title'])) {
-              final insertIndex =
-                  index > _favorites.length ? _favorites.length : index;
-              _favorites.insert(insertIndex, removedProduct);
-            }
-          }),
+        duration: const Duration(seconds: 3),
+        content: Row(
+          children: [
+            Expanded(child: Text('$title dihapus dari favorit.')),
+            TextButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                setState(() {
+                  if (!_favorites.any((product) =>
+                      product['title'] == removedProduct['title'])) {
+                    final insertIndex =
+                        index > _favorites.length ? _favorites.length : index;
+                    _favorites.insert(insertIndex, removedProduct);
+                  }
+                });
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
+              child: const Text('Urungkan'),
+            ),
+          ],
         ),
       ),
     );
@@ -460,71 +400,6 @@ class _FavoritePageState extends State<FavoritePage> {
       ),
     );
   }
-
-  Future<void> _showLocationPicker() async {
-    const locations = [
-      'Jakarta Selatan',
-      'Jakarta Pusat',
-      'Bandung',
-      'Depok',
-      'Tangerang',
-      'Surabaya',
-    ];
-    final selectedLocation = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            const ListTile(
-              title: Text('Pilih lokasi',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            ...locations.map((location) => ListTile(
-                  leading: const Icon(Icons.location_on_outlined),
-                  title: Text(location),
-                  trailing: location == _location
-                      ? Icon(Icons.check, color: tealText)
-                      : null,
-                  onTap: () => Navigator.pop(sheetContext, location),
-                )),
-          ],
-        ),
-      ),
-    );
-    if (selectedLocation != null && mounted) {
-      setState(() => _location = selectedLocation);
-    }
-  }
-
-  Future<void> _showNotifications() => showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Notifikasi'),
-          content: const Text('Belum ada notifikasi baru.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Tutup'),
-            ),
-          ],
-        ),
-      );
-
-  Future<void> _showMessages() => showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Pesan'),
-          content: const Text('Belum ada percakapan.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Tutup'),
-            ),
-          ],
-        ),
-      );
 
   Future<void> _showFilters() async {
     var category = _selectedCategory;

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
+
+import '../app_theme.dart';
 import 'detail_iklan.dart'; // <-- 1. Tambahkan import ini
 
 class JualBarangPage extends StatefulWidget {
@@ -17,6 +20,33 @@ class _JualBarangPageState extends State<JualBarangPage> {
 
   // State untuk kategori terpilih (Default: Mobil)
   String _selectedCategory = 'Mobil';
+  final List<Uint8List> _photos = [];
+  bool _isPickingPhotos = false;
+
+  Future<void> _pickPhotos() async {
+    if (_photos.length >= 10 || _isPickingPhotos) return;
+    setState(() => _isPickingPhotos = true);
+    try {
+      final selected = await ImagePicker().pickMultiImage(
+        limit: 10 - _photos.length,
+        imageQuality: 85,
+      );
+      final bytes = <Uint8List>[];
+      for (final photo in selected) {
+        bytes.add(await photo.readAsBytes());
+      }
+      if (!mounted) return;
+      setState(() => _photos.addAll(bytes));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto tidak dapat dipilih. Coba lagi.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPickingPhotos = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,72 +113,17 @@ class _JualBarangPageState extends State<JualBarangPage> {
             const SizedBox(height: 25),
 
             // --- AREA UPLOAD FOTO ---
-            Row(
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
               children: [
-                // Kotak Utama (Dashed Border)
-                Expanded(
-                  flex: 2,
-                  child: GestureDetector(
-                    onTap: () {
-                      // Logika tambah foto
-                    },
-                    child: Container(
-                      height: 160,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.grey.shade400,
-                          width: 1.5,
-                          // Catatan: Untuk dashed border sempurna, butuh package seperti dotted_border.
-                          // Di sini kita gunakan solid border agar tetap berjalan tanpa dependency.
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.camera_alt_outlined,
-                              size: 32, color: Colors.grey.shade700),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Tambah foto',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade800,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Maks. 10 foto',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Kotak Tambahan (Kanan)
-                Expanded(
-                  flex: 1,
-                  child: Container(
-                    height: 160,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: Center(
-                      child: Icon(Icons.add, color: Colors.grey.shade400, size: 30),
-                    ),
-                  ),
-                ),
+                ...List.generate(_photos.length, (index) => _photoTile(index)),
+                if (_photos.length < 10) _addPhotoTile(),
               ],
             ),
+            const SizedBox(height: 8),
+            Text('${_photos.length}/10 foto dipilih',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
             const SizedBox(height: 30),
 
             // --- PILIH KATEGORI ---
@@ -183,11 +158,19 @@ class _JualBarangPageState extends State<JualBarangPage> {
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
-                  // 2. Ubah onPressed untuk navigasi ke DetailIklanPage
+                  if (_photos.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tambahkan minimal satu foto barang.')),
+                    );
+                    return;
+                  }
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const DetailIklanPage(),
+                      builder: (context) => DetailIklanPage(
+                        category: _selectedCategory,
+                        photos: List.unmodifiable(_photos),
+                      ),
                     ),
                   );
                 },
@@ -212,6 +195,75 @@ class _JualBarangPageState extends State<JualBarangPage> {
       ),
     );
   }
+
+  Widget _addPhotoTile() => GestureDetector(
+        onTap: _pickPhotos,
+        child: Container(
+          width: 104,
+          height: 104,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _isPickingPhotos
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(Icons.add_a_photo_outlined,
+                      size: 26, color: Colors.grey.shade700),
+              const SizedBox(height: 6),
+              Text(_isPickingPhotos ? 'Memuat...' : 'Tambah foto',
+                  style: const TextStyle(fontSize: 11)),
+            ],
+          ),
+        ),
+      );
+
+  Widget _photoTile(int index) => Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.memory(
+              _photos[index],
+              width: 104,
+              height: 104,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: InkWell(
+              onTap: () => setState(() => _photos.removeAt(index)),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                    color: Colors.black54, shape: BoxShape.circle),
+                child: const Icon(Icons.close, color: Colors.white, size: 16),
+              ),
+            ),
+          ),
+          if (index == 0)
+            Positioned(
+              left: 5,
+              bottom: 5,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                    color: AppTheme.primaryPurple,
+                    borderRadius: BorderRadius.circular(5)),
+                child: const Text('Utama',
+                    style: TextStyle(color: Colors.white, fontSize: 9)),
+              ),
+            ),
+        ],
+      );
 
   // --- WIDGET KATEGORI CUSTOM ---
   Widget _buildCategoryItem(String title, IconData icon) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'app_theme.dart';
-import 'auth_service.dart';
+import '../app_theme.dart';
+import '../auth_service.dart';
 import 'forgot_password_page.dart';
 import 'register_page.dart';
 
@@ -59,13 +59,6 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Kembali',
-          onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(Icons.arrow_back),
-        ),
-      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

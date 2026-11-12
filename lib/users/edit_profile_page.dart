@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'app_theme.dart';
-import 'auth_service.dart';
+import '../app_theme.dart';
+import '../auth_service.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key, required this.initialUser});
@@ -255,11 +255,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.next,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(15),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Nomor telepon/WhatsApp *',
                         prefixIcon: Icon(Icons.phone_outlined),
                         hintText: 'Contoh: 081234567890',
+                        helperText:
+                            'Nomor ini akan digunakan pembeli untuk menghubungimu lewat WhatsApp.',
                       ),
                       validator: (value) {
                         final phone = value?.trim() ?? '';

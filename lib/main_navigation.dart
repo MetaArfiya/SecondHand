@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+
 import 'app_theme.dart';
-import 'dashboard.dart';
-import 'favorite.dart';
-import 'jualanku.dart';
-import 'profil.dart';
-import 'jual_barang.dart';
+import 'users/dashboard.dart';
+import 'users/favorite.dart';
+import 'users/jualanku.dart';
+import 'users/profil.dart';
+import 'users/jual_barang.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -16,58 +17,91 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
-  // Indeks di navbar menyisakan posisi tengah untuk tombol tambah.
-  int get _selectedNavIndex => _currentIndex < 2 ? _currentIndex : _currentIndex + 1;
-
-  final List<Widget> _pages = [
-    const DashboardPage(),
-    const FavoritePage(),
-    const JualankuPage(),
-    const ProfilPage(),
+  final List<Widget> _pages = const [
+    DashboardPage(),
+    FavoritePage(),
+    JualankuPage(),
+    ProfilPage(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _pages),
-
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (context) => const JualBarangPage(),
+      bottomNavigationBar: keyboardVisible
+          ? null
+          : SafeArea(
+              top: false,
+              child: Container(
+                height: 66,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                ),
+                child: Row(
+                  children: [
+                    _navigationItem(0, Icons.home_outlined, 'Beranda'),
+                    _navigationItem(1, Icons.favorite_border, 'Favorit'),
+                    SizedBox(
+                      width: 64,
+                      child: Center(
+                        child: SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: FloatingActionButton(
+                            heroTag: 'add_listing_button',
+                            onPressed: _openCreateListing,
+                            backgroundColor: AppTheme.accentLavender,
+                            foregroundColor: AppTheme.darkPlum,
+                            elevation: 1,
+                            shape: const CircleBorder(),
+                            child: const Icon(Icons.add, size: 28),
+                          ),
+                        ),
+                      ),
+                    ),
+                    _navigationItem(2, Icons.storefront_outlined, 'Jualanku'),
+                    _navigationItem(3, Icons.person_outline, 'Profil'),
+                  ],
+                ),
+              ),
             ),
-          );
-        },
-        backgroundColor: AppTheme.accentLavender,
-        foregroundColor: AppTheme.darkPlum,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, size: 30),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
 
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedNavIndex,
-        onTap: (index) {
-          if (index == 2) return; // Tombol tambah ditangani oleh FAB.
-          final pageIndex = index < 2 ? index : index - 1;
-          setState(() => _currentIndex = pageIndex);
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppTheme.secondaryPurple,
-        unselectedItemColor: AppTheme.textLightGrey,
-        showUnselectedLabels: true,
-        selectedFontSize: 10,
-        unselectedFontSize: 10,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Beranda'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: 'Favorit'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle, size: 0), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.storefront), label: 'Jualanku'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
-        ],
+  Widget _navigationItem(int pageIndex, IconData icon, String label) {
+    final selected = _currentIndex == pageIndex;
+    final color = selected ? AppTheme.secondaryPurple : AppTheme.textLightGrey;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _currentIndex = pageIndex),
+        child: SizedBox(
+          height: 66,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 23),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
+    );
+  }
+
+  void _openCreateListing() {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (_) => const JualBarangPage()),
     );
   }
 }

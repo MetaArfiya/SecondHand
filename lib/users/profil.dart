@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
-import 'auth_service.dart';
+import '../app_theme.dart';
+import '../auth_service.dart';
 import 'edit_profile_page.dart';
 import 'login_page.dart';
 
@@ -244,6 +244,11 @@ class _ProfilPageState extends State<ProfilPage> {
                 icon: Icons.settings_outlined,
                 title: 'Pengaturan akun',
                 onTap: _showAccountSettings,
+              ),
+              _buildMenuItem(
+                icon: Icons.admin_panel_settings_outlined,
+                title: 'Panel Admin',
+                onTap: () => Navigator.pushNamed(context, '/admin'),
               ),
               _buildMenuItem(
                 icon: Icons.login,

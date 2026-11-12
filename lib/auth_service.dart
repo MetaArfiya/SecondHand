@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
+
 class LocalUser {
   const LocalUser({
     required this.name,
@@ -25,6 +27,7 @@ class LocalAuthService {
 
   static final Map<String, ({LocalUser user, String password})> _accounts = {};
   static LocalUser? currentUser;
+  static final ValueNotifier<LocalUser?> userUpdates = ValueNotifier(null);
   static String get displayName =>
       currentUser?.name ?? 'Pengguna SecondHand';
 
@@ -39,7 +42,7 @@ class LocalAuthService {
       bio: profile.bio.trim(),
       avatarBytes: profile.avatarBytes,
     );
-    currentUser = updatedUser;
+    _setCurrentUser(updatedUser);
     final account = _accounts[user.email];
     if (account != null) {
       _accounts[user.email] = (user: updatedUser, password: account.password);
@@ -58,7 +61,7 @@ class LocalAuthService {
 
     final user = LocalUser(name: name.trim(), email: normalizedEmail);
     _accounts[normalizedEmail] = (user: user, password: password);
-    currentUser = user;
+    _setCurrentUser(user);
     return null;
   }
 
@@ -71,7 +74,7 @@ class LocalAuthService {
       return 'Kata sandi tidak sesuai.';
     }
 
-    currentUser = account.user;
+    _setCurrentUser(account.user);
     return null;
   }
 
@@ -92,5 +95,10 @@ class LocalAuthService {
     return null;
   }
 
-  static void logout() => currentUser = null;
+  static void logout() => _setCurrentUser(null);
+
+  static void _setCurrentUser(LocalUser? user) {
+    currentUser = user;
+    userUpdates.value = user;
+  }
 }

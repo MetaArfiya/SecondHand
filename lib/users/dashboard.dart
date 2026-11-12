@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
-import 'auth_service.dart';
+import '../app_theme.dart';
+import '../admin/ad_approval_store.dart';
+import '../auth_service.dart';
 import 'jual_barang.dart'; // Import halaman jual barang
+import 'product_detail_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -104,70 +108,84 @@ class _DashboardPageState extends State<DashboardPage> {
       padding: const EdgeInsets.fromLTRB(16, 50, 16, 20),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      LocalAuthService.displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: _showLocationPicker,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.location_on,
-                              color: Colors.white70, size: 14),
-                          const SizedBox(width: 3),
-                          Text(
-                            _location,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              fontSize: 11,
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right,
-                              color: Colors.white70, size: 14),
-                        ],
-                      ),
-                    ),
-                  ],
+          ValueListenableBuilder<LocalUser?>(
+            valueListenable: LocalAuthService.userUpdates,
+            builder: (context, user, _) => Row(
+              children: [
+                CircleAvatar(
+                  radius: 23,
+                  backgroundColor: AppTheme.accentLavender,
+                  backgroundImage: user?.avatarBytes == null
+                      ? null
+                      : MemoryImage(user!.avatarBytes!),
+                  child: user?.avatarBytes == null
+                      ? Text(
+                          (user?.name ?? LocalAuthService.displayName)
+                                  .trim()
+                                  .isEmpty
+                              ? 'U'
+                              : (user?.name ?? LocalAuthService.displayName)
+                                  .trim()[0]
+                                  .toUpperCase(),
+                          style: const TextStyle(
+                              color: AppTheme.darkPlum,
+                              fontWeight: FontWeight.bold),
+                        )
+                      : null,
                 ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    tooltip: 'Notifikasi',
-                    constraints:
-                        const BoxConstraints.tightFor(width: 40, height: 40),
-                    padding: EdgeInsets.zero,
-                    onPressed: _showNotifications,
-                    icon: Icon(Icons.notifications_none,
-                        color: Colors.white.withValues(alpha: 0.8)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user?.name ?? LocalAuthService.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: user == null ? _showLocationPicker : null,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.location_on,
+                                color: Colors.white70, size: 14),
+                            const SizedBox(width: 3),
+                            Flexible(
+                              child: Text(
+                                user?.location ?? _location,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right,
+                                color: Colors.white70, size: 14),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    tooltip: 'Pesan',
-                    constraints:
-                        const BoxConstraints.tightFor(width: 40, height: 40),
-                    padding: EdgeInsets.zero,
-                    onPressed: _showMessages,
-                    icon: Icon(Icons.chat_bubble_outline,
-                        color: Colors.white.withValues(alpha: 0.8)),
-                  ),
-                ],
-              ),
-            ],
+                ),
+                IconButton(
+                  tooltip: 'Notifikasi',
+                  constraints:
+                      const BoxConstraints.tightFor(width: 40, height: 40),
+                  padding: EdgeInsets.zero,
+                  onPressed: _showNotifications,
+                  icon: Icon(Icons.notifications_none,
+                      color: Colors.white.withValues(alpha: 0.8)),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -452,51 +470,70 @@ class _DashboardPageState extends State<DashboardPage> {
   // WIDGET: GRID PRODUK
   // ==========================================
   Widget _buildProductGrid() {
-    final query = _searchQuery.toLowerCase();
-    final products = _products.where((product) {
-      final matchesCategory = _selectedCategory == 'Semua' ||
-          product['category'] == _selectedCategory;
-      final searchableText =
-          '${product['title']} ${product['category']} ${product['location']}'
-              .toLowerCase();
-      return matchesCategory && searchableText.contains(query);
-    }).toList();
-    if (_sortOrder == 'Harga terendah') {
-      products.sort((a, b) => _priceValue(a['price'] as String)
-          .compareTo(_priceValue(b['price'] as String)));
-    } else if (_sortOrder == 'Harga tertinggi') {
-      products.sort((a, b) => _priceValue(b['price'] as String)
-          .compareTo(_priceValue(a['price'] as String)));
-    }
+    return ValueListenableBuilder<List<AdListing>>(
+      valueListenable: AdApprovalStore.listings,
+      builder: (context, listings, _) {
+        final query = _searchQuery.toLowerCase();
+        final products = _allProducts(listings).where((product) {
+          final matchesCategory = _selectedCategory == 'Semua' ||
+              product['category'] == _selectedCategory;
+          final searchableText =
+              '${product['title']} ${product['category']} ${product['location']}'
+                  .toLowerCase();
+          return matchesCategory && searchableText.contains(query);
+        }).toList();
+        if (_sortOrder == 'Harga terendah') {
+          products.sort((a, b) =>
+              _priceValue(a['price'] as String).compareTo(_priceValue(b['price'] as String)));
+        } else if (_sortOrder == 'Harga tertinggi') {
+          products.sort((a, b) =>
+              _priceValue(b['price'] as String).compareTo(_priceValue(a['price'] as String)));
+        }
 
-    if (products.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(child: Text('Belum ada barang di kategori ini.')),
-      );
-    }
+        if (products.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: Text('Belum ada barang di kategori ini.')),
+          );
+        }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.72,
-        children: products.map((product) => _buildProductCard(
-          product['title']! as String,
-          product['price']! as String,
-          product['location']! as String,
-          product['time']! as String,
-          product['image']! as String,
-          isFeatured: product['featured']! as bool,
-        )).toList(),
-      ),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.72,
+            children: products.map(_buildProductCard).toList(),
+          ),
+        );
+      },
     );
   }
 
+  List<Map<String, Object>> _allProducts(List<AdListing> listings) {
+    final products = List<Map<String, Object>>.from(_products);
+    for (final listing in listings.where((item) => item.status == AdStatus.approved)) {
+      if (listing.photos.isEmpty) continue;
+      products.add({
+        'category': listing.category,
+        'title': listing.title,
+        'price': listing.price,
+        'location': listing.location,
+        'time': 'BARU',
+        'image': '',
+        'imageBytes': listing.photos.first,
+        'featured': false,
+        'condition': 'Bekas',
+        'description': listing.description,
+        'seller': listing.seller,
+        'phone': listing.sellerPhone,
+      });
+    }
+    return products;
+  }
   int _priceValue(String price) =>
       int.parse(price.replaceAll(RegExp(r'[^0-9]'), ''));
 
@@ -517,44 +554,19 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Future<void> _showProductDetails(String title) async {
-    final product = _products.firstWhere((item) => item['title'] == title);
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(product['title']! as String),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(product['category']! as String),
-            const SizedBox(height: 8),
-            Text(
-              product['price']! as String,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text('${product['location']} • ${product['time']}'),
-          ],
+  Future<void> _showProductDetails(Map<String, Object> product) async {
+    final title = product['title']! as String;
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetailPage(
+          product: product,
+          isFavorite: _favoriteTitles.contains(title),
+          onFavorite: () => _toggleFavorite(title),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Tutup'),
-          ),
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              _toggleFavorite(title);
-            },
-            icon: const Icon(Icons.favorite_border),
-            label: const Text('Favorit'),
-          ),
-        ],
       ),
     );
   }
-
   Future<void> _showLocationPicker() async {
     const locations = [
       'Jakarta Selatan',
@@ -602,27 +614,6 @@ class _DashboardPageState extends State<DashboardPage> {
               Icon(Icons.notifications_none, size: 40, color: Colors.grey),
               SizedBox(height: 12),
               Text('Belum ada notifikasi baru.'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Tutup'),
-            ),
-          ],
-        ),
-      );
-
-  Future<void> _showMessages() => showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Pesan'),
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.chat_bubble_outline, size: 40, color: Colors.grey),
-              SizedBox(height: 12),
-              Text('Belum ada percakapan.'),
             ],
           ),
           actions: [
@@ -702,12 +693,17 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildProductCard(String title, String price, String location,
-      String time, String imageUrl,
-      {required bool isFeatured}) {
+  Widget _buildProductCard(Map<String, Object> product) {
+    final title = product['title']! as String;
+    final price = product['price']! as String;
+    final location = product['location']! as String;
+    final time = product['time']! as String;
+    final imageUrl = product['image']! as String;
+    final imageBytes = product['imageBytes'];
+    final isFeatured = product['featured']! as bool;
     final isFavorite = _favoriteTitles.contains(title);
     return InkWell(
-      onTap: () => _showProductDetails(title),
+      onTap: () => _showProductDetails(product),
       borderRadius: BorderRadius.circular(10),
       child: Container(
       decoration: AppTheme.cardDecoration,
@@ -719,18 +715,24 @@ class _DashboardPageState extends State<DashboardPage> {
               ClipRRect(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(10)),
-                child: Image.network(
-                  imageUrl,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 120,
-                    color: Colors.grey.shade300,
-                    child:
-                        const Icon(Icons.broken_image, color: Colors.grey),
-                  ),
-                ),
+                child: imageBytes is Uint8List
+                    ? Image.memory(
+                        imageBytes,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.network(
+                        imageUrl,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 120,
+                          color: Colors.grey.shade300,
+                          child: const Icon(Icons.broken_image, color: Colors.grey),
+                        ),
+                      ),
               ),
               if (isFeatured)
                 Positioned(
