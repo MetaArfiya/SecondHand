@@ -101,32 +101,38 @@ class _ProfilPageState extends State<ProfilPage> {
               Row(
                 children: [
                   // Avatar Inisial
-                  Container(
-                    width: 70,
-                    height: 70,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.bgPurpleTint,
-                      shape: BoxShape.circle,
-                    ),
-                    child: _avatarBytes == null
-                        ? Center(
-                            child: Text(
-                              initials.isEmpty ? 'NA' : initials,
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: darkBlue,
+                  InkWell(
+                    onTap: _avatarBytes == null
+                        ? _showEditProfile
+                        : _showAvatarPreview,
+                    borderRadius: BorderRadius.circular(40),
+                    child: Container(
+                      width: 70,
+                      height: 70,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.bgPurpleTint,
+                        shape: BoxShape.circle,
+                      ),
+                      child: _avatarBytes == null
+                          ? Center(
+                              child: Text(
+                                initials.isEmpty ? 'NA' : initials,
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: darkBlue,
+                                ),
+                              ),
+                            )
+                          : ClipOval(
+                              child: Image.memory(
+                                _avatarBytes!,
+                                width: 70,
+                                height: 70,
+                                fit: BoxFit.cover,
                               ),
                             ),
-                          )
-                        : ClipOval(
-                            child: Image.memory(
-                              _avatarBytes!,
-                              width: 70,
-                              height: 70,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   // Detail User
@@ -292,6 +298,45 @@ class _ProfilPageState extends State<ProfilPage> {
       _bio = updatedUser.bio;
       _avatarBytes = updatedUser.avatarBytes;
     });
+  }
+
+  Future<void> _showAvatarPreview() async {
+    final imageBytes = _avatarBytes;
+    if (imageBytes == null) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(20),
+        child: SizedBox(
+          width: MediaQuery.sizeOf(context).width * 0.85,
+          height: MediaQuery.sizeOf(context).height * 0.72,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 4,
+                child: Image.memory(imageBytes, fit: BoxFit.contain),
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton.filled(
+                  tooltip: 'Tutup foto',
+                  onPressed: () => Navigator.pop(dialogContext),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black54,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _openLoginPage() {

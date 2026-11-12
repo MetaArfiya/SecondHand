@@ -23,14 +23,51 @@ class _JualBarangPageState extends State<JualBarangPage> {
   final List<Uint8List> _photos = [];
   bool _isPickingPhotos = false;
 
-  Future<void> _pickPhotos() async {
+  Future<void> _choosePhotoSource() async {
+    if (_photos.length >= 10 || _isPickingPhotos) return;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Pilih dari galeri'),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Ambil foto sekarang'),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source != null && mounted) await _pickPhotos(source);
+  }
+
+  Future<void> _pickPhotos(ImageSource source) async {
     if (_photos.length >= 10 || _isPickingPhotos) return;
     setState(() => _isPickingPhotos = true);
     try {
-      final selected = await ImagePicker().pickMultiImage(
-        limit: 10 - _photos.length,
-        imageQuality: 85,
-      );
+      final picker = ImagePicker();
+      final List<XFile> selected;
+      if (source == ImageSource.gallery) {
+        selected = await picker.pickMultiImage(
+          limit: 10 - _photos.length,
+          imageQuality: 85,
+        );
+      } else {
+        final photo = await picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 85,
+          maxWidth: 1600,
+          maxHeight: 1600,
+        );
+        selected = photo == null ? <XFile>[] : <XFile>[photo];
+      }
       final bytes = <Uint8List>[];
       for (final photo in selected) {
         bytes.add(await photo.readAsBytes());
@@ -197,7 +234,7 @@ class _JualBarangPageState extends State<JualBarangPage> {
   }
 
   Widget _addPhotoTile() => GestureDetector(
-        onTap: _pickPhotos,
+        onTap: _choosePhotoSource,
         child: Container(
           width: 104,
           height: 104,

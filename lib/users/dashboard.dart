@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../admin/ad_approval_store.dart';
 import '../auth_service.dart';
+import 'favorite_store.dart';
 import 'jual_barang.dart'; // Import halaman jual barang
 import 'product_detail_page.dart';
 
@@ -23,7 +24,6 @@ class _DashboardPageState extends State<DashboardPage> {
   String _searchQuery = '';
   String _location = 'Jakarta Selatan';
   String _sortOrder = 'Relevan';
-  final Set<String> _favoriteTitles = <String>{};
   final TextEditingController _searchController = TextEditingController();
 
   final List<Map<String, Object>> _products = [
@@ -537,18 +537,15 @@ class _DashboardPageState extends State<DashboardPage> {
   int _priceValue(String price) =>
       int.parse(price.replaceAll(RegExp(r'[^0-9]'), ''));
 
-  void _toggleFavorite(String title) {
-    setState(() {
-      if (!_favoriteTitles.add(title)) {
-        _favoriteTitles.remove(title);
-      }
-    });
-    final isFavorite = _favoriteTitles.contains(title);
+  void _toggleFavorite(Map<String, Object> product) {
+    final title = product['title']! as String;
+    final wasFavorite = FavoriteStore.contains(title);
+    FavoriteStore.toggle(product);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(isFavorite
-            ? '$title ditambahkan ke favorit.'
-            : '$title dihapus dari favorit.'),
+        content: Text(wasFavorite
+            ? '$title dihapus dari favorit.'
+            : '$title ditambahkan ke favorit.'),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -561,8 +558,8 @@ class _DashboardPageState extends State<DashboardPage> {
       MaterialPageRoute(
         builder: (_) => ProductDetailPage(
           product: product,
-          isFavorite: _favoriteTitles.contains(title),
-          onFavorite: () => _toggleFavorite(title),
+          isFavorite: FavoriteStore.contains(title),
+          onFavorite: () => _toggleFavorite(product),
         ),
       ),
     );
@@ -701,7 +698,6 @@ class _DashboardPageState extends State<DashboardPage> {
     final imageUrl = product['image']! as String;
     final imageBytes = product['imageBytes'];
     final isFeatured = product['featured']! as bool;
-    final isFavorite = _favoriteTitles.contains(title);
     return InkWell(
       onTap: () => _showProductDetails(product),
       borderRadius: BorderRadius.circular(10),
@@ -777,22 +773,31 @@ class _DashboardPageState extends State<DashboardPage> {
                             fontWeight: FontWeight.w600, fontSize: 13),
                       ),
                     ),
-                    IconButton(
-                      tooltip: isFavorite
-                          ? 'Hapus dari favorit'
-                          : 'Tambahkan ke favorit',
-                      visualDensity: VisualDensity.compact,
-                      constraints:
-                          const BoxConstraints.tightFor(width: 32, height: 32),
-                      padding: EdgeInsets.zero,
-                      onPressed: () => _toggleFavorite(title),
-                      icon: Icon(
-                        isFavorite ? Icons.favorite : Icons.favorite_border,
-                        size: 18,
-                        color: isFavorite
-                            ? AppTheme.dangerRed
-                            : Colors.grey.shade400,
-                      ),
+                    ValueListenableBuilder<List<Map<String, Object>>>(
+                      valueListenable: FavoriteStore.items,
+                      builder: (context, favorites, _) {
+                        final isFavorite = favorites
+                            .any((item) => item['title'] == title);
+                        return IconButton(
+                          tooltip: isFavorite
+                              ? 'Hapus dari favorit'
+                              : 'Tambahkan ke favorit',
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints.tightFor(
+                              width: 32, height: 32),
+                          padding: EdgeInsets.zero,
+                          onPressed: () => _toggleFavorite(product),
+                          icon: Icon(
+                            isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            size: 18,
+                            color: isFavorite
+                                ? AppTheme.dangerRed
+                                : Colors.grey.shade400,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

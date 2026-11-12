@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
+import 'favorite_store.dart';
 
 class FavoritePage extends StatefulWidget {
   const FavoritePage({super.key});
@@ -18,44 +21,7 @@ class _FavoritePageState extends State<FavoritePage> {
   String _sortOrder = 'Relevan';
   final TextEditingController _searchController = TextEditingController();
 
-  final List<Map<String, Object>> _favorites = [
-    {
-      'category': 'HP',
-      'title': 'iPhone 13 Pro 256GB',
-      'price': 'Rp 11.250.000',
-      'location': 'TANGERANG',
-      'time': '2 JAM',
-      'image': 'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?auto=format&fit=crop&w=400&q=80',
-      'featured': true,
-    },
-    {
-      'category': 'Mobil',
-      'title': 'Honda HR-V E CVT',
-      'price': 'Rp 268.000.000',
-      'location': 'JAKARTA SELATAN',
-      'time': '12 MENIT',
-      'image': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=400&q=80',
-      'featured': false,
-    },
-    {
-      'category': 'Motor',
-      'title': 'Vespa Sprint 150 i-Get',
-      'price': 'Rp 42.500.000',
-      'location': 'BANDUNG',
-      'time': '35 MENIT',
-      'image': 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=400&q=80',
-      'featured': false,
-    },
-    {
-      'category': 'Sepeda',
-      'title': 'Polygon Xtrada 5',
-      'price': 'Rp 5.850.000',
-      'location': 'JAKARTA',
-      'time': '1 JAM',
-      'image': 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=400&q=80',
-      'featured': false,
-    },
-  ];
+
 
   @override
   void dispose() {
@@ -260,66 +226,76 @@ class _FavoritePageState extends State<FavoritePage> {
   // WIDGET: GRID FAVORIT
   // ==========================================
   Widget _buildFavoriteGrid() {
-    final query = _searchQuery.toLowerCase();
-    final favorites = _favorites.where((product) {
-      final matchesCategory = _selectedCategory == 'Semua' ||
-          product['category'] == _selectedCategory;
-      final searchableText =
-          '${product['title']} ${product['category']} ${product['location']}'
-              .toLowerCase();
-      return matchesCategory && searchableText.contains(query);
-    }).toList();
-    if (_sortOrder == 'Harga terendah') {
-      favorites.sort((a, b) => _priceValue(a['price'] as String)
-          .compareTo(_priceValue(b['price'] as String)));
-    } else if (_sortOrder == 'Harga tertinggi') {
-      favorites.sort((a, b) => _priceValue(b['price'] as String)
-          .compareTo(_priceValue(a['price'] as String)));
-    }
+    return ValueListenableBuilder<List<Map<String, Object>>>(
+      valueListenable: FavoriteStore.items,
+      builder: (context, allFavorites, _) {
+        final query = _searchQuery.toLowerCase();
+        final favorites = allFavorites.where((product) {
+          final matchesCategory = _selectedCategory == 'Semua' ||
+              product['category'] == _selectedCategory;
+          final searchableText =
+              '${product['title']} ${product['category']} ${product['location']}'
+                  .toLowerCase();
+          return matchesCategory && searchableText.contains(query);
+        }).toList();
+        if (_sortOrder == 'Harga terendah') {
+          favorites.sort((a, b) => _priceValue(a['price'] as String)
+              .compareTo(_priceValue(b['price'] as String)));
+        } else if (_sortOrder == 'Harga tertinggi') {
+          favorites.sort((a, b) => _priceValue(b['price'] as String)
+              .compareTo(_priceValue(a['price'] as String)));
+        }
 
-    if (favorites.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(32),
-        child: Center(
-          child: Column(
-            children: [
-              Icon(Icons.favorite_border, size: 42, color: Colors.grey.shade400),
-              const SizedBox(height: 10),
-              Text(
-                _searchQuery.isNotEmpty
-                    ? 'Tidak ada barang yang cocok dengan pencarian.'
-                    : 'Belum ada barang favorit di kategori ini.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600),
+        if (favorites.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(32),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.favorite_border,
+                      size: 42, color: Colors.grey.shade400),
+                  const SizedBox(height: 10),
+                  Text(
+                    _searchQuery.isNotEmpty
+                        ? 'Tidak ada barang yang cocok dengan pencarian.'
+                        : 'Belum ada barang favorit di kategori ini.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                  TextButton(
+                      onPressed: _resetFilters,
+                      child: const Text('Lihat semua')),
+                ],
               ),
-              TextButton(onPressed: _resetFilters, child: const Text('Lihat semua')),
-            ],
-          ),
-        ),
-      );
-    }
+            ),
+          );
+        }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.72,
-        children: favorites.map((product) => _buildProductCard(
-          product['title']! as String,
-          product['price']! as String,
-          product['location']! as String,
-          product['time']! as String,
-          product['image']! as String,
-          isFeatured: product['featured']! as bool,
-        )).toList(),
-      ),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.72,
+            children: favorites
+                .map((product) => _buildProductCard(
+                      product['title']! as String,
+                      product['price']! as String,
+                      product['location']! as String,
+                      product['time']! as String,
+                      product['image']! as String,
+                      isFeatured: product['featured']! as bool,
+                      imageBytes: product['imageBytes'],
+                    ))
+                .toList(),
+          ),
+        );
+      },
     );
   }
-
   void _resetFilters() {
     _searchController.clear();
     setState(() {
@@ -333,10 +309,12 @@ class _FavoritePageState extends State<FavoritePage> {
       int.parse(price.replaceAll(RegExp(r'[^0-9]'), ''));
 
   void _removeFavorite(String title) {
-    final index = _favorites.indexWhere((product) => product['title'] == title);
+    final index = FavoriteStore.items.value
+        .indexWhere((product) => product['title'] == title);
     if (index < 0) return;
-    final removedProduct = _favorites.removeAt(index);
-    setState(() {});
+    final removedProduct =
+        Map<String, Object>.from(FavoriteStore.items.value[index]);
+    FavoriteStore.remove(title);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
@@ -346,14 +324,7 @@ class _FavoritePageState extends State<FavoritePage> {
             TextButton(
               onPressed: () {
                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                setState(() {
-                  if (!_favorites.any((product) =>
-                      product['title'] == removedProduct['title'])) {
-                    final insertIndex =
-                        index > _favorites.length ? _favorites.length : index;
-                    _favorites.insert(insertIndex, removedProduct);
-                  }
-                });
+                FavoriteStore.restore(removedProduct, index);
               },
               style: TextButton.styleFrom(foregroundColor: Colors.white),
               child: const Text('Urungkan'),
@@ -363,10 +334,9 @@ class _FavoritePageState extends State<FavoritePage> {
       ),
     );
   }
-
   Future<void> _showProductDetails(String title) async {
-    final product =
-        _favorites.firstWhere((item) => item['title'] == title);
+    final product = FavoriteStore.items.value
+        .firstWhere((item) => item['title'] == title);
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -469,7 +439,7 @@ class _FavoritePageState extends State<FavoritePage> {
 
   Widget _buildProductCard(String title, String price, String location,
       String time, String imageUrl,
-      {required bool isFeatured}) {
+      {required bool isFeatured, Object? imageBytes}) {
     return InkWell(
       onTap: () => _showProductDetails(title),
       borderRadius: BorderRadius.circular(10),
@@ -483,17 +453,24 @@ class _FavoritePageState extends State<FavoritePage> {
               ClipRRect(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(10)),
-                child: Image.network(
-                  imageUrl,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 120,
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.broken_image, color: Colors.grey),
-                  ),
-                ),
+                child: imageBytes is Uint8List
+                    ? Image.memory(
+                        imageBytes,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.network(
+                        imageUrl,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 120,
+                          color: Colors.grey.shade300,
+                          child: const Icon(Icons.broken_image, color: Colors.grey),
+                        ),
+                      ),
               ),
               if (isFeatured)
                 Positioned(
