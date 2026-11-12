@@ -1,17 +1,132 @@
-# secondhand
 
-A new Flutter project.
+# SecondHand App 📱
 
-## Getting Started
+Aplikasi marketplace C2C untuk jual beli barang bekas yang dibangun menggunakan Flutter sebagai frontend dan FastAPI Python sebagai backend.
 
-This project is a starting point for a Flutter application.
+SecondHand memudahkan pengguna untuk menjual dan membeli barang bekas secara online dengan proses yang praktis.
 
-A few resources to get you started if this is your first Flutter project:
+## ✨ Fitur Utama
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Autentikasi Login dan Register dengan validasi email `.com`
+- Jual barang dengan upload foto
+- Pencarian barang dan filter kategori
+- Favorit barang
+- Dashboard penjual dengan statistik iklan
+- Posting barang secara gratis
+- Promosi iklan berbayar dengan pembayaran manual melalui transfer bank
+- Verifikasi pembayaran promosi oleh admin
+- Notifikasi dan pesan
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🛠️ Teknologi yang Digunakan
+
+### Frontend
+- Flutter
+- Dart
+- HTTP
+- SharedPreferences
+- Image Picker
+
+### Backend
+- Python
+- FastAPI
+- SQLAlchemy
+- SQLite
+- JWT Authentication
+- Passlib (Bcrypt)
+
+## 📂 Struktur Proyek
+
+```text
+SecondHand/
+├── SecondHand/             # Flutter Frontend
+└── SecondHand-Backend/     # Python FastAPI Backend
+```
+
+## 🚀 Cara Menjalankan Proyek
+
+### 1. Menjalankan Backend
+
+Masuk ke folder backend:
+
+```bash
+cd SecondHand-Backend
+```
+
+Buat virtual environment:
+
+```bash
+python -m venv venv
+```
+
+Aktifkan virtual environment di Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Jalankan server FastAPI:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Backend dapat diakses melalui:
+
+```text
+http://127.0.0.1:8000
+```
+
+Dokumentasi API:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### 2. Menjalankan Frontend Flutter
+
+Buka terminal baru dan masuk ke folder Flutter:
+
+```bash
+cd SecondHand
+```
+
+Install dependencies:
+
+```bash
+flutter pub get
+```
+
+Jalankan aplikasi:
+
+```bash
+flutter run
+```
+
+Untuk menjalankan versi web:
+
+```bash
+flutter run -d chrome
+```
+
+## 💳 Sistem Promosi Iklan
+
+SecondHand menerapkan dua jenis layanan:
+
+- **Posting Gratis:** Pengguna dapat mengunggah dan menjual barang tanpa biaya.
+- **Promosi Berbayar:** Pengguna dapat membayar untuk mempromosikan iklan agar mendapatkan visibilitas tambahan.
+
+Pembayaran promosi dilakukan melalui transfer bank dan diverifikasi oleh admin.
+
+## 👩‍💻 Developer
+
+SecondHand App
+
+---
+
+*Dibangun sebagai proyek pengembangan aplikasi marketplace jual beli barang bekas.*
