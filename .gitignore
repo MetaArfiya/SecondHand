@@ -1,78 +1,13 @@
-
-# ==================================
-# FLUTTER / DART
-# ==================================
-
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-Thumbs.db
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# VS Code
-# .vscode/
-
-# Flutter / Dart
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
-
-# Symbolication
-app.*.symbols
-app.*.map.json
-
-# Android build artifacts
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Widget Preview
-.widget_preview/
-
-# ==================================
-# PYTHON BACKEND
-# ==================================
-
-# Virtual Environment
-SecondHand-Backend/venv/
-SecondHand-Backend/.venv/
-
-# Python cache
-SecondHand-Backend/__pycache__/
+﻿# Python
+backend/.venv/
 __pycache__/
 *.py[cod]
+*.db
 
-# SQLite database
-SecondHand-Backend/*.db
-
-# User uploads
-SecondHand-Backend/uploads/
-
-# ==================================
-# ENVIRONMENT / SECRETS
-# ==================================
-
+# Env
 .env
-.env.local
-.env.*.local
+
+# OS & IDE
+.DS_Store
+.idea/
+.vscode/
