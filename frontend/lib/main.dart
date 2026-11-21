@@ -20,10 +20,21 @@ class SecondHandApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       home: const AppStartupPage(),
-      routes: {
-        '/login': (_) => const LoginPage(),
-        '/home': (_) => const MainNavigation(),
-        '/admin': (_) => const AdminDashboardPage(),
+      onGenerateRoute: (settings) {
+        final page = switch (settings.name) {
+          '/login' => const LoginPage(),
+          '/home' => const MainNavigation(),
+          '/admin' => const AdminDashboardPage(),
+          _ => null,
+        };
+        if (page == null) return null;
+        return PageRouteBuilder<void>(
+          settings: settings,
+          pageBuilder: (context, animation, secondaryAnimation) => page,
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+          transitionsBuilder: (_, __, ___, child) => child,
+        );
       },
     );
   }

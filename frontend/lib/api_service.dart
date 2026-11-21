@@ -189,12 +189,14 @@ class ApiService {
   static Future<void> register(
     String name,
     String email,
-    String password,
-  ) async {
+    String password, {
+    String? phone,
+  }) async {
     await _authenticate('/api/auth/register', {
       'name': name.trim(),
       'email': email.trim().toLowerCase(),
       'password': password,
+      'phone': phone?.trim().isNotEmpty == true ? phone!.trim() : null,
     });
   }
 

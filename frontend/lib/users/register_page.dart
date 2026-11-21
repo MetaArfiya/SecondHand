@@ -15,8 +15,10 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmationController = TextEditingController();
+  final _confirmationFocusNode = FocusNode();
   bool _obscurePassword = true;
   bool _obscureConfirmation = true;
 
@@ -24,8 +26,10 @@ class _RegisterPageState extends State<RegisterPage> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmationController.dispose();
+    _confirmationFocusNode.dispose();
     super.dispose();
   }
 
@@ -48,6 +52,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _nameController.text,
         _emailController.text,
         _passwordController.text,
+        phone: _phoneController.text,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -83,6 +88,22 @@ class _RegisterPageState extends State<RegisterPage> {
           r'^[^\s@]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)*\.com$',
           caseSensitive: false,
         ).hasMatch(email);
+  }
+
+  String? _validatePhone(String? value) {
+    final input = (value ?? '').trim().replaceAll(RegExp(r'[\s().-]'), '');
+    if (input.isEmpty) return null;
+    var normalized = input;
+    if (normalized.startsWith('0')) {
+      normalized = '+62${normalized.substring(1)}';
+    } else if (normalized.startsWith('62')) {
+      normalized = '+$normalized';
+    } else if (normalized.startsWith('8')) {
+      normalized = '+62$normalized';
+    }
+    return RegExp(r'^\+628[1-9][0-9]{6,11}$').hasMatch(normalized)
+        ? null
+        : 'Masukkan nomor WhatsApp Indonesia yang valid';
   }
 
   @override
@@ -153,9 +174,25 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        labelText: 'Nomor WhatsApp (opsional)',
+                        hintText: '08... atau +628...',
+                        helperText: 'Bisa diubah lagi melalui profil.',
+                        prefixIcon: Icon(Icons.chat_outlined),
+                      ),
+                      validator: _validatePhone,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.next,
+                      onEditingComplete: () =>
+                          FocusScope.of(context)
+                              .requestFocus(_confirmationFocusNode),
                       decoration: InputDecoration(
                         labelText: 'Kata sandi',
                         prefixIcon: const Icon(Icons.lock_outline),
@@ -175,6 +212,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _confirmationController,
+                      focusNode: _confirmationFocusNode,
                       obscureText: _obscureConfirmation,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),

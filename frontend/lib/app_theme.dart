@@ -80,6 +80,16 @@ class AppTheme {
           bodyMedium: body,
           bodySmall: caption,
         ),
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: _StablePageTransitionsBuilder(),
+            TargetPlatform.fuchsia: _StablePageTransitionsBuilder(),
+            TargetPlatform.iOS: _StablePageTransitionsBuilder(),
+            TargetPlatform.linux: _StablePageTransitionsBuilder(),
+            TargetPlatform.macOS: _StablePageTransitionsBuilder(),
+            TargetPlatform.windows: _StablePageTransitionsBuilder(),
+          },
+        ),
         colorScheme: ColorScheme.fromSeed(
           seedColor: primaryPurple,
           primary: primaryPurple,
@@ -126,4 +136,23 @@ class AppTheme {
           hintStyle: const TextStyle(color: textLightGrey, fontSize: 13),
         ),
       );
+}
+
+class _StablePageTransitionsBuilder extends PageTransitionsBuilder {
+  const _StablePageTransitionsBuilder();
+
+  @override
+  Duration get transitionDuration => Duration.zero;
+
+  @override
+  Duration get reverseTransitionDuration => Duration.zero;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => child;
 }

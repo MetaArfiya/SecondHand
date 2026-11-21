@@ -5,7 +5,6 @@ import '../app_theme.dart';
 import '../auth_service.dart';
 import '../api_service.dart';
 import 'edit_profile_page.dart';
-import 'login_page.dart';
 
 class ProfilPage extends StatefulWidget {
   const ProfilPage({super.key});
@@ -33,6 +32,7 @@ class _ProfilPageState extends State<ProfilPage> {
   @override
   void initState() {
     super.initState();
+    LocalAuthService.userUpdates.addListener(_handleSessionChange);
     final user = LocalAuthService.currentUser;
     if (user != null) {
       _name = user.name;
@@ -42,6 +42,25 @@ class _ProfilPageState extends State<ProfilPage> {
       _avatarBytes = user.avatarBytes;
       _avatarUrl = user.avatarUrl;
     }
+  }
+
+  void _handleSessionChange() {
+    if (!mounted) return;
+    final user = LocalAuthService.currentUser;
+    setState(() {
+      _name = user?.name ?? 'Pengguna SecondHand';
+      _location = user?.location ?? 'Jakarta Selatan';
+      _phone = user?.phone ?? '';
+      _bio = user?.bio ?? '';
+      _avatarBytes = user?.avatarBytes;
+      _avatarUrl = user?.avatarUrl;
+    });
+  }
+
+  @override
+  void dispose() {
+    LocalAuthService.userUpdates.removeListener(_handleSessionChange);
+    super.dispose();
   }
 
   @override
@@ -390,11 +409,10 @@ class _ProfilPageState extends State<ProfilPage> {
     );
   }
 
-  void _openLoginPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute<void>(builder: (_) => const LoginPage()),
-    );
+  Future<void> _openLoginPage() async {
+    await LocalAuthService.logout();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
   }
 
   Future<void> _showLogoutConfirmation() async {

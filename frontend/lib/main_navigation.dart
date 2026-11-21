@@ -75,7 +75,10 @@ class _MainNavigationState extends State<MainNavigation> {
     final color = selected ? AppTheme.secondaryPurple : AppTheme.textLightGrey;
     return Expanded(
       child: InkWell(
-        onTap: () => setState(() => _currentIndex = pageIndex),
+        onTap: () {
+          if (_currentIndex == pageIndex) return;
+          setState(() => _currentIndex = pageIndex);
+        },
         child: SizedBox(
           height: 66,
           child: Column(

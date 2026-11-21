@@ -1,7 +1,7 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../app_theme.dart';
@@ -128,7 +128,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _chooseLocation() async {
-    const locations = [
+    final detectedLocations = _detectCurrentArea();
+    const manualLocations = [
       'Jakarta Selatan',
       'Jakarta Pusat',
       'Jakarta Barat',
@@ -140,30 +141,116 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final location = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (sheetContext) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            const ListTile(
-              title: Text(
-                'Pilih kota/kecamatan',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            ...locations.map(
-              (item) => ListTile(
-                leading: const Icon(Icons.location_on_outlined),
-                title: Text(item),
-                onTap: () => Navigator.pop(sheetContext, item),
-              ),
-            ),
-          ],
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.75,
+          ),
+          child: FutureBuilder<List<String>>(
+            future: detectedLocations,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.all(28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Mencari kota dan kecamatan di sekitar kamu...'),
+                    ],
+                  ),
+                );
+              }
+
+              final options = snapshot.data ?? const <String>[];
+              final hasDetectedLocation =
+                  !snapshot.hasError && options.isNotEmpty;
+              final visibleOptions = hasDetectedLocation
+                  ? options
+                  : manualLocations;
+
+              return ListView(
+                shrinkWrap: true,
+                children: [
+                  ListTile(
+                    title: Text(
+                      hasDetectedLocation
+                          ? 'Lokasi di sekitar kamu'
+                          : 'Pilih lokasi secara manual',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      hasDetectedLocation
+                          ? 'Berdasarkan posisi perangkat saat ini'
+                          : 'Izin atau layanan lokasi tidak tersedia.',
+                    ),
+                  ),
+                  ...visibleOptions.map(
+                    (item) => ListTile(
+                      leading: const Icon(Icons.location_on_outlined),
+                      title: Text(item),
+                      onTap: () => Navigator.pop(sheetContext, item),
+                    ),
+                  ),
+                  if (!hasDetectedLocation) ...[
+                    const Divider(),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+                      child: Text(
+                        'Aktifkan izin lokasi untuk menampilkan area di sekitar kamu.',
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
     if (location != null && mounted) {
       setState(() => _locationController.text = location);
     }
+  }
+
+  Future<List<String>> _detectCurrentArea() async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      throw Exception('Layanan lokasi perangkat sedang nonaktif.');
+    }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      throw Exception('Izin lokasi belum diberikan.');
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.low,
+        timeLimit: Duration(seconds: 15),
+      ),
+    );
+    final placemarks = await Geocoding(
+      locale: const Locale('id', 'ID'),
+    ).placemarkFromCoordinates(position.latitude, position.longitude);
+
+    final areas = <String>{};
+    for (final place in placemarks) {
+      for (final area in [
+        place.subLocality,
+        place.locality,
+        place.subAdministrativeArea,
+      ]) {
+        final value = area?.trim();
+        if (value != null && value.isNotEmpty) areas.add(value);
+      }
+    }
+    return areas.toList();
   }
 
   void _save() {

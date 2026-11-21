@@ -89,7 +89,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           child: FutureBuilder<List<Map<String, dynamic>>>(
             future: _payments,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting)
+              // Refresh in place so existing payment cards do not disappear.
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData)
                 return const Center(child: CircularProgressIndicator());
               if (snapshot.hasError)
                 return Center(

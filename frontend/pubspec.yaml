@@ -38,6 +38,8 @@ dependencies:
   url_launcher: ^6.3.2
   http: ^1.6.0
   shared_preferences: ^2.5.6
+  geolocator: ^14.1.2
+  geocoding: ^5.0.1
 
 dev_dependencies:
   flutter_test:

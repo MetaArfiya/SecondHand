@@ -120,10 +120,10 @@ class LocalAuthService {
   }
 
   static Future<void> logout() async {
-    accessToken = null;
-    _setCurrentUser(null);
     final preferences = await SharedPreferences.getInstance();
     await preferences.remove('access_token');
+    accessToken = null;
+    _setCurrentUser(null);
   }
 
   static void _setCurrentUser(LocalUser? user) {
